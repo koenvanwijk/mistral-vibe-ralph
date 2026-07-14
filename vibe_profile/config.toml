@@ -1,0 +1,21 @@
+# Tunable Vibe harness profile for Mistral Medium 3.5 (local, DGX Spark).
+# The [[providers]] / [[models]] / active_model block is INFRASTRUCTURE — do not
+# change it. The proposer tunes everything else (system prompt, enabled_skills,
+# default_agent, tool settings) to improve agentic-coding scores.
+
+active_model = "mistral-local"
+
+[[providers]]
+name = "spark-mistral"
+api_base = "http://192.168.86.29:8010/v1"
+api_key_env_var = "VIBE_LOCAL_KEY"
+api_style = "openai"
+backend = "generic"
+
+[[models]]
+name = "Mistral-Medium-3.5"
+provider = "spark-mistral"
+alias = "mistral-local"
+
+# --- tunable below this line ---
+enabled_skills = []
