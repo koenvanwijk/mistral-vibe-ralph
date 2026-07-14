@@ -13,3 +13,10 @@ PASS 04_no_loops
 PASS 05_paginate
 FAIL 06_multifile
 [2026-07-14T23:31:42+02:00] baseline score=5
+[2026-07-14T23:31:43+02:00] --- iteration 1 (best=5) ---
+[2026-07-14T23:35:22+02:00] proposer unavailable (consecutive=1). See runs/proposer_1.log
+[2026-07-14T23:35:22+02:00] --- iteration 2 (best=5) ---
+[2026-07-14T23:35:24+02:00] proposer unavailable (consecutive=2). See runs/proposer_2.log
+[2026-07-14T23:35:24+02:00] Claude proposer exhausted — switching to 127-eval fallback
+[2026-07-14T23:35:24+02:00] === FALLBACK: deepagents 127-eval vs Mistral-Medium-3.5 ===
+[2026-07-14T23:36:24+02:00] === 127-eval finished — results in eval127.log ===
