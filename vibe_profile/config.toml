@@ -5,6 +5,16 @@
 
 active_model = "mistral-local"
 
+# --- tunable (must stay ABOVE the [[providers]]/[[models]] table headers: in
+# TOML, keys written after a table header belong to that table, not top level;
+# VibeConfigSchema only reads these as TOP-LEVEL keys and silently ignores
+# unknown/misplaced ones) ---
+# Disable write_file: the model batches multiple write_file calls in one
+# message, which serialize as dead plain text (06_multifile 0/3). With
+# write_file gone, file creation goes through ONE bash call (mkdir -p +
+# quoted heredocs), the recipe the tool-call-protocol skill teaches.
+disabled_tools = ["write_file"]
+
 [[providers]]
 name = "spark-mistral"
 api_base = "http://192.168.86.29:8010/v1"
@@ -17,6 +27,10 @@ name = "Mistral-Medium-3.5"
 provider = "spark-mistral"
 alias = "mistral-local"
 
-# --- tunable below this line ---
-system_prompt = """You are an expert coding agent. ALWAYS use real tool calls to execute actions. Never output tool calls as plain text. If you need to write a file, use the write_file tool. If you need to run a command, use the run_command tool. Follow the tool-call protocol skill. WARNING: Any tool call output as plain text will not be executed and will cause failure."""
+# NOTE: the two keys below sit inside the [[models]] table (they follow its
+# header) and ModelConfig ignores unknown keys — they are INERT and always
+# have been. Kept only as documentation of intent; the skill is active anyway
+# because ~/.vibe/skills/ is auto-discovered. Do not add tunables here — put
+# them at the TOP of this file, above [[providers]].
+system_prompt = """You are an expert coding agent. ALWAYS use real structured tool calls to execute actions. Never output a tool call as plain text: text is not executed, no file is written, and the task fails. Make exactly ONE tool call per message. Create files with the bash tool (mkdir -p plus quoted heredocs when several files are needed); modify existing files with the edit tool. Follow the tool-call-protocol skill."""
 enabled_skills = ["tool-call-protocol"]

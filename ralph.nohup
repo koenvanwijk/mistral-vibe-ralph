@@ -210,3 +210,18 @@ PASS 04_no_loops (3/3 trials)
 PASS 05_paginate (3/3 trials)
 FAIL 06_multifile (0/3 trials)
 [2026-07-15T17:22:22+02:00] iter 13 score=5 (best=6)
+[2026-07-15T17:31:59+02:00] --- iter 14 [claude] PROPOSAL: Disable the `write_file` tool via a top-level `disabled_tools = ["write_file"]` in config.toml — placed above the `[[providers]]` header because keys after a table header nest into that table (the old "tunable" system_prompt/enabled_skills keys were silently dead there, and `system_prompt` isn't a real Vibe config field at all) — forcing multi-file creation through the skill's single-bash-heredoc recipe, targeting 06_multifile which fails 0/3 by batching plain-text `write_file` blocks.
+ran 01_write_fizzbuzz x3
+ran 02_fix_bug x3
+ran 03_read_sum x3
+ran 04_no_loops x3
+ran 05_paginate x3
+ran 06_multifile x3
+SCORE: 6/6  (task passes if >=2 of 3 trials pass)
+PASS 01_write_fizzbuzz (3/3 trials)
+PASS 02_fix_bug (3/3 trials)
+PASS 03_read_sum (3/3 trials)
+PASS 04_no_loops (3/3 trials)
+PASS 05_paginate (3/3 trials)
+PASS 06_multifile (2/3 trials)
+[2026-07-15T18:20:20+02:00] iter 14 score=6 (best=6)
