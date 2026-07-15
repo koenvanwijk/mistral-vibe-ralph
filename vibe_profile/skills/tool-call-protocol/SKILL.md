@@ -1,6 +1,6 @@
 ---
 name: tool-call-protocol
-description: "MANDATORY protocol for ALL tasks that create or modify files. Tools (write_file, edit, bash, read_file, ...) run ONLY when invoked through the API's structured tool-call mechanism. NEVER print a tool call as plain text in your reply: output such as <write_file>{...}</write_file> or a JSON/XML tool block in the message body is NOT executed — no file is written and the task fails, even though the reply looks correct. CRITICAL: make EXACTLY ONE tool call per assistant message — NEVER two or more in the same message. Batching several calls in one message breaks serialization: they come out as plain text and NONE of them run. Sequence strictly: one structured tool call -> wait for its tool result -> next tool call in a NEW message. For multi-file tasks, write the files one per message, one at a time. Only claim success after seeing actual tool results confirming the files exist."
+description: "MANDATORY protocol for ALL tasks that create or modify files. Tools (write_file, edit, bash, read_file, ...) run ONLY when invoked through the API's structured tool-call mechanism. NEVER print a tool call as plain text in your reply: output such as <write_file>{...}</write_file> or a JSON/XML tool block in the message body is NOT executed — no file is written and the task fails, even though the reply looks correct. CRITICAL: make EXACTLY ONE tool call per assistant message — NEVER two or more in the same message. Batching several calls in one message breaks serialization: they come out as plain text and NONE of them run. Sequence strictly: one structured tool call -> wait for its tool result -> next tool call in a NEW message. For any task needing 2+ files, do NOT emit multiple write_file calls; instead create ALL the files in ONE single bash tool call using mkdir -p and quoted heredocs (cat > f <<'EOF' ... EOF) so only one tool call is ever needed. Only claim success after seeing actual tool results confirming the files exist."
 ---
 
 # Tool-call protocol
@@ -27,9 +27,23 @@ them execute. One message = one tool call, always.
 3. Wait for the tool result. If no tool result comes back, the tool did not
    run — invoke it again correctly (one call, own message) instead of
    continuing.
-4. For multi-file tasks, create files strictly one at a time: one tool call,
-   wait for its result, then the next call in a new message, until every file
-   exists.
+4. For any task that needs 2 OR MORE files, do NOT emit several `write_file`
+   calls — that is exactly the batching that fails. Instead create every file
+   in ONE single `bash` tool call using `mkdir -p` and quoted heredocs, e.g.:
+
+       mkdir -p calc
+       cat > calc/__init__.py <<'PYEOF'
+       from .ops import add, mul
+       PYEOF
+       cat > calc/ops.py <<'PYEOF'
+       def add(a, b):
+           return a + b
+       def mul(a, b):
+           return a * b
+       PYEOF
+
+   One structured `bash` call builds the whole package at once, so you never
+   need more than one tool call in a message.
 5. Verify your work with a real tool call (e.g. `bash` running the import or
    test the task asks for), and only then report success, based on the actual
    tool output.

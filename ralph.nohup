@@ -150,3 +150,18 @@ PASS 04_no_loops (3/3 trials)
 PASS 05_paginate (3/3 trials)
 FAIL 06_multifile (0/3 trials)
 [2026-07-15T15:03:45+02:00] iter 9 score=5 (best=6)
+[2026-07-15T15:05:10+02:00] --- iter 10 [claude] PROPOSAL: Update the `tool-call-protocol` skill so multi-file tasks are built with ONE `bash` tool call (`mkdir -p` + quoted heredocs) instead of multiple `write_file` calls — targeting 06_multifile, which fails 0/3 because the model batches both `write_file` blocks as plain text and nothing executes.
+ran 01_write_fizzbuzz x3
+ran 02_fix_bug x3
+ran 03_read_sum x3
+ran 04_no_loops x3
+ran 05_paginate x3
+ran 06_multifile x3
+SCORE: 6/6  (task passes if >=2 of 3 trials pass)
+PASS 01_write_fizzbuzz (3/3 trials)
+PASS 02_fix_bug (3/3 trials)
+PASS 03_read_sum (3/3 trials)
+PASS 04_no_loops (3/3 trials)
+PASS 05_paginate (3/3 trials)
+PASS 06_multifile (3/3 trials)
+[2026-07-15T15:39:53+02:00] iter 10 score=6 (best=6)
