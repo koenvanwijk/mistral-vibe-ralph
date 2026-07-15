@@ -8,3 +8,4 @@ results: 0 passed, 192 failed, 0 skipped (total=192)
 ## 2026-07-15T11:06:00+02:00 iter 3 [claude] ROLLBACK score=5<6 — PROPOSAL: Add error-recovery clause to tool-call-protocol skill (description + step 3): on a tool ERROR result, fix arguments and retry as a new single structured call — never give up or fall back to plain-text tool calls — hardening against relapse of the historical 06_multifile flakiness now that all tasks pass 3/3.
 ## 2026-07-15T11:50:54+02:00 iter 4 [local] KEEP score=6 — PROPOSAL: (local proposer no-op — unparseable)
 ## 2026-07-15T12:32:10+02:00 iter 5 [local] KEEP score=6 — PROPOSAL: Add system_prompt to enforce real tool-call usage and prevent plain-text tool call emission.
+## 2026-07-15T13:14:45+02:00 iter 6 [local] KEEP score=6 — PROPOSAL: (local proposer no-op — unparseable)
