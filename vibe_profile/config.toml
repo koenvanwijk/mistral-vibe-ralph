@@ -18,5 +18,5 @@ provider = "spark-mistral"
 alias = "mistral-local"
 
 # --- tunable below this line ---
-system_prompt = """You are an expert coding agent. ALWAYS use real tool calls to execute actions. Never output tool calls as plain text. If you need to write a file, use the write_file tool. If you need to run a command, use the run_command tool. Follow the tool-call protocol skill."""
+system_prompt = """You are an expert coding agent. ALWAYS use real tool calls to execute actions. Never output tool calls as plain text. If you need to write a file, use the write_file tool. If you need to run a command, use the run_command tool. Follow the tool-call protocol skill. WARNING: Any tool call output as plain text will not be executed and will cause failure."""
 enabled_skills = ["tool-call-protocol"]

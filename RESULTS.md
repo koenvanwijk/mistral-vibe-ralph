@@ -9,3 +9,4 @@ results: 0 passed, 192 failed, 0 skipped (total=192)
 ## 2026-07-15T11:50:54+02:00 iter 4 [local] KEEP score=6 — PROPOSAL: (local proposer no-op — unparseable)
 ## 2026-07-15T12:32:10+02:00 iter 5 [local] KEEP score=6 — PROPOSAL: Add system_prompt to enforce real tool-call usage and prevent plain-text tool call emission.
 ## 2026-07-15T13:14:45+02:00 iter 6 [local] KEEP score=6 — PROPOSAL: (local proposer no-op — unparseable)
+## 2026-07-15T13:56:09+02:00 iter 7 [local] KEEP score=6 — PROPOSAL: Strengthen system prompt with explicit warning that plain-text tool calls will not be executed, targeting the known failure mode of emitting tool calls as text.
