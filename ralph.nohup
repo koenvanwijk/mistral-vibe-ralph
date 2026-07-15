@@ -43,3 +43,18 @@ PASS 04_no_loops (3/3 trials)
 PASS 05_paginate (3/3 trials)
 PASS 06_multifile (3/3 trials)
 [2026-07-15T10:30:55+02:00] iter 2 score=6 (best=5)
+[2026-07-15T10:32:25+02:00] --- iter 3 [claude] PROPOSAL: Add error-recovery clause to tool-call-protocol skill (description + step 3): on a tool ERROR result, fix arguments and retry as a new single structured call — never give up or fall back to plain-text tool calls — hardening against relapse of the historical 06_multifile flakiness now that all tasks pass 3/3.
+ran 01_write_fizzbuzz x3
+ran 02_fix_bug x3
+ran 03_read_sum x3
+ran 04_no_loops x3
+ran 05_paginate x3
+ran 06_multifile x3
+SCORE: 5/6  (task passes if >=2 of 3 trials pass)
+PASS 01_write_fizzbuzz (3/3 trials)
+PASS 02_fix_bug (3/3 trials)
+PASS 03_read_sum (3/3 trials)
+PASS 04_no_loops (3/3 trials)
+PASS 05_paginate (3/3 trials)
+FAIL 06_multifile (0/3 trials)
+[2026-07-15T11:06:00+02:00] iter 3 score=5 (best=6)
