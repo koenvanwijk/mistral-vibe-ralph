@@ -1,23 +1,15 @@
-[2026-07-14T23:21:02+02:00] === ralph start: up to 40 iterations ===
-ran 01_write_fizzbuzz (exit 0)
-ran 02_fix_bug (exit 0)
-ran 03_read_sum (exit 0)
-ran 04_no_loops (exit 0)
-ran 05_paginate (exit 0)
-ran 06_multifile (exit 0)
-SCORE: 5/6
-PASS 01_write_fizzbuzz
-PASS 02_fix_bug
-PASS 03_read_sum
-PASS 04_no_loops
-PASS 05_paginate
-FAIL 06_multifile
-[2026-07-14T23:31:42+02:00] baseline score=5
-[2026-07-14T23:31:43+02:00] --- iteration 1 (best=5) ---
-[2026-07-14T23:35:22+02:00] proposer unavailable (consecutive=1). See runs/proposer_1.log
-[2026-07-14T23:35:22+02:00] --- iteration 2 (best=5) ---
-[2026-07-14T23:35:24+02:00] proposer unavailable (consecutive=2). See runs/proposer_2.log
-[2026-07-14T23:35:24+02:00] Claude proposer exhausted — switching to 127-eval fallback
-[2026-07-14T23:35:24+02:00] === FALLBACK: deepagents 127-eval vs Mistral-Medium-3.5 ===
-[2026-07-14T23:36:24+02:00] === 127-eval finished — results in eval127.log ===
-[2026-07-14T23:36:25+02:00] === ralph done, best=5 ===
+[2026-07-15T08:37:38+02:00] === ralph start: up to 30 iterations, TRIALS=3 ===
+ran 01_write_fizzbuzz x3
+ran 02_fix_bug x3
+ran 03_read_sum x3
+ran 04_no_loops x3
+ran 05_paginate x3
+ran 06_multifile x3
+SCORE: 5/6  (task passes if >=2 of 3 trials pass)
+PASS 01_write_fizzbuzz (3/3 trials)
+PASS 02_fix_bug (3/3 trials)
+PASS 03_read_sum (3/3 trials)
+PASS 04_no_loops (3/3 trials)
+PASS 05_paginate (3/3 trials)
+FAIL 06_multifile (0/3 trials)
+[2026-07-15T09:09:12+02:00] baseline score=5
