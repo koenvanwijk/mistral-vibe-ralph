@@ -18,4 +18,4 @@ provider = "spark-mistral"
 alias = "mistral-local"
 
 # --- tunable below this line ---
-enabled_skills = []
+enabled_skills = ["tool-call-protocol"]
