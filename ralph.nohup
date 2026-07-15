@@ -225,3 +225,18 @@ PASS 04_no_loops (3/3 trials)
 PASS 05_paginate (3/3 trials)
 PASS 06_multifile (2/3 trials)
 [2026-07-15T18:20:20+02:00] iter 14 score=6 (best=6)
+[2026-07-15T18:21:44+02:00] --- iter 15 [claude] PROPOSAL: Strengthen the `tool-call-protocol` skill with an explicit WRONG-vs-RIGHT contrast forbidding the `mkdir + touch` (create-empty-then-fill-later) pattern — the exact anti-pattern in 06_multifile trial2, where the model created empty files with a real bash call, then tried to fill `ops.py` with a second `write_file` call that serialized as dead plain text, leaving the file empty and the import failing. The skill now mandates that file content live inside the heredocs of the single bash call, targeting 06_multifile (currently flaky 2/3) for full 3/3 robustness.
+ran 01_write_fizzbuzz x3
+ran 02_fix_bug x3
+ran 03_read_sum x3
+ran 04_no_loops x3
+ran 05_paginate x3
+ran 06_multifile x3
+SCORE: 6/6  (task passes if >=2 of 3 trials pass)
+PASS 01_write_fizzbuzz (3/3 trials)
+PASS 02_fix_bug (3/3 trials)
+PASS 03_read_sum (3/3 trials)
+PASS 04_no_loops (3/3 trials)
+PASS 05_paginate (3/3 trials)
+PASS 06_multifile (2/3 trials)
+[2026-07-15T19:05:56+02:00] iter 15 score=6 (best=6)

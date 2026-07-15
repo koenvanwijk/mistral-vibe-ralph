@@ -44,6 +44,32 @@ them execute. One message = one tool call, always.
 
    One structured `bash` call builds the whole package at once, so you never
    need more than one tool call in a message.
+
+   CRITICAL — do NOT create the files empty first and fill them later. The
+   file CONTENT must be inside the heredocs in this SAME bash call. This split
+   is the #1 cause of failure:
+
+       # WRONG — creates empty files, then a second call to add content.
+       # The second call serializes as plain text and never runs, so the
+       # files stay EMPTY and every import fails:
+       mkdir -p calc && touch calc/__init__.py calc/ops.py   # call 1
+       write_file calc/ops.py ...                             # call 2 -> DEAD
+
+       # RIGHT — content lives in the heredocs, so ONE bash call finishes
+       # the whole task and no second call is ever needed:
+       mkdir -p calc
+       cat > calc/__init__.py <<'PYEOF'
+       from .ops import add, mul
+       PYEOF
+       cat > calc/ops.py <<'PYEOF'
+       def add(a, b):
+           return a + b
+       def mul(a, b):
+           return a * b
+       PYEOF
+
+   Never use `touch` (or an empty heredoc) to stub files you plan to fill in a
+   later message — write the real content the first time.
 5. Verify your work with a real tool call (e.g. `bash` running the import or
    test the task asks for), and only then report success, based on the actual
    tool output.
