@@ -75,5 +75,24 @@ for i in $(seq 1 "$N"); do
     git clean -fdq vibe_profile/ 2>/dev/null || true
     commit "iter $i [$mode] rollback (score $new<$best)"
   fi
+
+  # Auto-escalate: when the harness is saturated (all tasks pass) for 2 rounds,
+  # generate a harder task and re-baseline so there is always headroom to tune.
+  ntasks=$(ls -d tasks/*/ 2>/dev/null | wc -l)
+  if [ "${new:-0}" -eq "$ntasks" ]; then sat=$((sat+1)); else sat=0; fi
+  if [ "$sat" -ge 2 ]; then
+    log "saturated ($new/$ntasks) x$sat — escalating with a harder task"
+    if bash scripts/gen_task.sh; then
+      sat=0
+      bash scripts/apply_profile.sh
+      bash scripts/run_all.sh | tee -a "$REPO/ralph.log"
+      bash scripts/score.sh
+      best=$(cat runs/current/SCORE_NUM.txt 2>/dev/null || echo 0)
+      nt=$(ls -d tasks/*/ 2>/dev/null | wc -l)
+      log "re-baseline after escalation: best=$best/$nt"
+      echo "## $(date -Is) re-baseline after escalation: $best/$nt tasks" >> RESULTS.md
+      commit "re-baseline after escalation: best=$best/$nt"
+    fi
+  fi
 done
 log "=== ralph done, best=$best ==="
