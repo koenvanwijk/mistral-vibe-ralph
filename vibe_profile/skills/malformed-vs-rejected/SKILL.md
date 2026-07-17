@@ -1,34 +1,55 @@
 ---
 name: malformed-vs-rejected
-description: "MANDATORY when a task defines TWO OR MORE categories of invalid input with different handling (e.g. MALFORMED lines silently ignored vs REJECTED lines recorded in an output file): implement them as two SEPARATE phases and never let one check leak into the other. Phase 1 — syntactic well-formedness on the RAW, UNMODIFIED line: never strip(), trim, lower(), or normalize whitespace before validating; a leading space, trailing space, tab, or double space makes the line malformed even though stripping would 'fix' it — only strip the newline (rstrip('\\n')), then check exact field count with line.split(' ') and exact per-field patterns. Phase 2 — semantic rules (id not present in the reference data / accounts file, insufficient balance, self-transfer) apply ONLY to lines that passed phase 1, and a semantic failure means REJECTED (it MUST appear in the rejected output), NEVER silently ignored: an id that matches the required pattern (e.g. A9999) but is missing from the accounts file is a REJECTION to record, not a malformed line to drop. Before finishing, audit your code with a real bash call: any strip()/trim before validation, or any 'is it in the lookup table' membership test inside the parse/malformed check, is a bug — fix it, re-run the whole pipeline, and re-check both output files against every category rule in the prompt."
+description: "MANDATORY whenever a task validates lines/records against exact formatting rules, especially with two invalid categories (MALFORMED silently ignored vs REJECTED recorded in an output file). Phase 1 — syntax, decided by ONE anchored regex on the RAW line: `line = raw.rstrip('\\n')` then `m = re.fullmatch(r'(DEPOSIT|WITHDRAW) A\\d{4} [1-9]\\d*|TRANSFER A\\d{4} A\\d{4} [1-9]\\d*', line)`; no match means MALFORMED, silently ignored. Copy this shape exactly: fullmatch on the un-stripped line is what catches a trailing space, leading space, tab, or double space — the word strip()/trim() must NOT appear anywhere in your program except rstrip('\\n'), because stripping 'repairs' malformed lines and silently corrupts balances. Phase 2 — semantics, ONLY for lines that matched: an account id that fits the pattern but is missing from the accounts data, an overdraft, or a self-transfer means REJECTED and MUST be recorded in the rejected output in processing order — never dropped as malformed; keep every lookup-table membership test OUT of the parse function. Before finishing, run BOTH audits in bash: (a) `grep -n strip your_script.py` — anything except rstrip('\\n') is a bug; (b) `grep -nP '\\t|  |^ | $' txns/*.log` lists the whitespace-trap lines — confirm each one was IGNORED (appears in neither output nor any balance). Then re-run the whole pipeline and re-check both output files against every rule (counts per category, exact format, ordering, tie-breaks)."
 ---
 
-# Malformed vs rejected: two phases, never merged
+# Malformed vs rejected: one regex, two phases, two audits
 
-Specs that replay logs or records often define two distinct kinds of bad
-input: lines that are *syntactically* invalid (ignore silently) and lines
-that are syntactically fine but *semantically* disallowed (record as
-rejected). Collapsing these into one validity check is the classic bug: the
-rejected-output file silently loses entries, and normalized lines that should
-have been ignored get applied.
+Specs that replay logs define two distinct kinds of bad input: lines that are
+*syntactically* invalid (ignore silently) and lines that are syntactically
+fine but *semantically* disallowed (record as rejected). Two classic bugs:
 
-## Rules
+1. Calling `strip()` before validating — this "repairs" lines whose only
+   defect is a leading/trailing space, so a malformed line gets APPLIED and
+   one balance ends up silently wrong.
+2. Testing `id in accounts` inside the parse step — this makes
+   unknown-account lines vanish as malformed instead of being RECORDED as
+   rejected.
 
-1. **Validate the raw line.** Remove only the trailing newline. Do NOT call
-   `strip()` / `trim()` first: leading/trailing spaces and tabs are exactly
-   what the malformed-line rules exist to catch. Check field count with a
-   single-space split (`line.split(' ')`) so double spaces produce empty
-   fields and fail; check each field against its exact grammar (operation
-   word case-sensitive, id pattern, amount with no leading zeros/sign/dot).
-2. **Syntax says nothing about existence.** Whether an id exists in the
-   accounts/reference data is NOT part of well-formedness. Keep the parse
-   function free of any lookup-table membership test.
-3. **Semantic failures are recorded, not dropped.** After a line parses,
-   apply the spec's rejection rules (unknown id on ANY operand, overdraft,
-   self-transfer, ...). Every such failure goes to the rejected output in
-   processing order.
-4. **Audit before done.** `grep -n 'strip\|in accounts\|in data' yourscript`
-   — a strip before validation or a membership test inside parsing means the
-   two phases leaked into each other. Fix, re-run on the full input, and
-   re-check both output files against every rule in the prompt (counts per
-   category, exact formats, ordering, tie-breaks).
+## Phase 1 — syntax via one anchored fullmatch on the raw line
+
+Copy this shape (adapt the grammar to the spec):
+
+```python
+for lineno, raw in enumerate(f, 1):
+    line = raw.rstrip('\n')          # ONLY the newline — nothing else, ever
+    m = re.fullmatch(
+        r'(DEPOSIT|WITHDRAW) (A\d{4}) ([1-9]\d*)'
+        r'|TRANSFER (A\d{4}) (A\d{4}) ([1-9]\d*)', line)
+    if m is None:
+        continue                     # MALFORMED: silently ignored
+```
+
+`re.fullmatch` on the un-stripped line automatically fails trailing spaces,
+leading spaces, tabs, double spaces, lowercase ops, wrong field counts,
+leading-zero or signed or decimal amounts, and bad id shapes — with zero
+per-case code. Do not write `line.strip()` anywhere; it is the bug.
+
+## Phase 2 — semantics, only for matched lines, always recorded
+
+Unknown id in the reference data (on ANY operand), insufficient balance,
+self-transfer: these are REJECTIONS. Append `(filename, lineno, op)` to the
+rejected list — never `continue` past them silently. Existence in the
+accounts file is NOT part of well-formedness.
+
+## Two audits before you finish (real bash calls)
+
+1. `grep -n strip your_script.py` — every hit must be `rstrip('\n')`.
+2. `grep -nP '\t|  |^ | $' txns/*.log` — these are the planted whitespace
+   traps; verify each listed line was ignored: not applied to any balance
+   and absent from the rejected output.
+
+Then re-run the pipeline end to end and re-check both output files against
+every rule in the prompt: per-category counts, exact line format, ordering,
+tie-breaks, and the final formatting (e.g. cents → dollars with two
+decimals).
