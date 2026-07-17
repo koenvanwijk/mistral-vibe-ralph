@@ -30,3 +30,4 @@ results: 0 passed, 192 failed, 0 skipped (total=192)
 ## 2026-07-16T20:49:12+02:00 baseline score=16
 ## 2026-07-17T00:33:11+02:00 iter 1 [claude] KEEP score=16 — PROPOSAL: add skill verify-before-done (final requirements checklist: end-to-end bash verification, persistence re-run, byte-exact output diff before finishing) — targets the next auto-escalated long-horizon/exact-format task, since all 16 current tasks pass 3/3.
 ## 2026-07-17T04:12:02+02:00 iter 2 [claude] KEEP score=16 — PROPOSAL: add skill plan-before-code (pre-implementation numbered rule checklist, explicit handling of exclusion rules, script-the-whole-file discipline for large inputs) — targets the next auto-escalated many-rule/exact-format task, since all 16 current tasks pass 3/3.
+## 2026-07-17T08:41:19+02:00 re-baseline after escalation: 16/17 tasks
