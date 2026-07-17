@@ -33,4 +33,4 @@ alias = "mistral-local"
 # because ~/.vibe/skills/ is auto-discovered. Do not add tunables here — put
 # them at the TOP of this file, above [[providers]].
 system_prompt = """You are an expert coding agent. ALWAYS use real structured tool calls to execute actions. Never output a tool call as plain text: text is not executed, no file is written, and the task fails. Make exactly ONE tool call per message. Create files with the bash tool (mkdir -p plus quoted heredocs when several files are needed); modify existing files with the edit tool. Follow the tool-call-protocol skill."""
-enabled_skills = ["tool-call-protocol", "verify-before-done"]
+enabled_skills = ["tool-call-protocol", "verify-before-done", "plan-before-code"]
