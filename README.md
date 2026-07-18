@@ -55,8 +55,28 @@ So the effective, always-on steering the loop converged on is:
 Everything the proposer changes is committed under `vibe_profile/` and pushed
 each round, so the tuned harness *is* the repo history.
 
+## Benchmark tasks: aider polyglot (Exercism hard set)
+
+When the harness saturates (all tasks pass 2 rounds in a row), the escalator
+first pulls a task from `bench_pool/` — the **Python subset of the
+[aider polyglot benchmark](https://github.com/Aider-AI/polyglot-benchmark)**
+(34 Exercism exercises selected by the aider project *because* many models
+fail them). `scripts/convert_polyglot.py` converted each exercise into the
+standard task layout (instructions → `prompt.txt`, stub+tests → `seed/`,
+`.meta/example.py` → `_reference/`, pytest wrapper → `verify.sh`; the verify
+restores the pristine test file first, so test-tampering can't pass). All 34
+were validated the same way generated tasks are: reference passes, stub fails.
+
+`bench_pool/ORDER.txt` orders the pool hardest-first (interpreters, constraint
+solvers, parsers before string formatting). Tasks Mistral immediately passes
+just trigger the next escalation, so the loop self-selects the exercises
+Mistral actually struggles with. Only when the pool is empty does the
+escalator fall back to Claude-generated synthetic tasks (`gen_task.sh`).
+Exercism exercise content is MIT-licensed (via the aider polyglot repo).
+
 ## Layout
 - `tasks/<name>/` — `prompt.txt` (given to Vibe), `verify.sh <workdir>`, optional `seed/`
+- `bench_pool/<name>/` — converted aider-polyglot tasks awaiting import (`ORDER.txt` = import order)
 - `vibe_profile/` — the tunable harness (`config.toml`, `agents/`, `skills/`) synced into `~/.vibe/`
 - `scripts/` — `run_all.sh`, `score.sh`, `apply_profile.sh`
 - `proposer/PROPOSER.md` — instructions for the headless Claude Code proposer

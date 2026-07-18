@@ -9,6 +9,11 @@ log(){ echo "[$(date -Is)] [gen] $*" | tee -a "$REPO/ralph.log"; }
 
 n=$(ls -d tasks/*/ 2>/dev/null | wc -l)
 [ "$n" -ge "$MAXTASKS" ] && { log "task cap $MAXTASKS reached — no escalation"; exit 1; }
+
+# Prefer a real benchmark task from bench_pool/ (aider polyglot, hard-first)
+# over generating a synthetic one; fall through to Claude when the pool is dry.
+bash scripts/import_bench.sh && exit 0
+
 timeout 60 claude -p "reply with exactly OK" --dangerously-skip-permissions 2>/dev/null | grep -q OK \
   || { log "Claude unavailable — skip escalation this round"; exit 1; }
 
