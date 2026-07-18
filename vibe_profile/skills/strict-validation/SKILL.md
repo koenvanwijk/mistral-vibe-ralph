@@ -1,6 +1,6 @@
 ---
 name: strict-validation
-description: "MANDATORY when writing any validation, parsing, or is_valid_* function (emails, URLs, formats). Graders use STRICTER edge cases than the literal prompt wording, so interpret every constraint per-COMPONENT, not just on the whole string: a rule like 'must not start or end with X' also applies to each part around a delimiter — for emails, after splitting on '@', the local part AND the domain part must each be non-empty and must not start or end with '.' or '@' (so 'a@.com', '.a@b.com', 'a@b.' are ALL invalid). Before reporting success you MUST run the function with a real bash tool call against these edge cases and confirm each returns False: '' , '@y.com', 'x@', 'a@@b.com', 'a@.com', '.a@b.com', 'a@b.', 'x y@z.com' — and True for normal inputs like 'x@y.com', 'a.b@c.d.com'. If any edge case returns the wrong value, fix the function and re-test before finishing."
+description: "'a@.com' is INVALID — boundary rules apply to EVERY part around a delimiter, not just the whole string. MANDATORY for any validation / parsing / is_valid_* function (emails, URLs, formats). BEFORE writing code, restate this rule in your reply: after splitting an email on '@', the local part AND the domain part must each be non-empty and must not start or end with '.' — so 'a@.com', '.a@b.com', 'a@b.' are ALL False even though the literal prompt wording only forbids '@'/'.' at the ends of the whole string; graders test stricter cases than the prompt states. Your LAST step MUST be one bash tool call asserting the function returns False for every one of: '' , '@y.com', 'x@', 'a@@b.com', 'a@.com', '.a@b.com', 'a@b.', 'x y@z.com' — and True for 'x@y.com', 'a.b@c.d.com', 'user@host.co'. If any assertion fails, fix and re-run; NEVER report success until this exact test has passed in a real tool result."
 ---
 
 # Strict validation
@@ -11,6 +11,10 @@ component of the input, not only the whole string.
 
 ## Rules
 
+0. COMMITMENT ECHO — before writing any code, restate in your reply: "Boundary
+   rules apply to every part around a delimiter: local AND domain must be
+   non-empty and must not start or end with '.', so 'a@.com', '.a@b.com',
+   'a@b.' are all invalid." A rule you never wrote down is one you will skip.
 1. Split the input on its delimiter(s) and check EVERY part: non-empty, and
    not starting or ending with any forbidden character.
 2. For `is_valid_email(s)` specifically: exactly one `@`; local part
