@@ -1,24 +1,25 @@
 ---
 name: malformed-vs-rejected
-description: "NEVER call .strip() on a data line. MANDATORY whenever a task validates lines/records against exact whitespace-sensitive formatting rules (e.g. MALFORMED silently ignored vs REJECTED recorded in an output file). The one fatal bug: line.strip() before validation 'repairs' a line whose only defect is a leading/trailing space, so a malformed line gets APPLIED and a balance is silently wrong. STEP 1 — before writing any code, COMMIT by writing this exact sentence in your reply: I will not call strip() on any data line; I will validate each RAW line, removing only the trailing newline with rstrip, using one anchored re.fullmatch. STEP 2 — copy this shape: `line = raw.rstrip('\\n')` then `m = re.fullmatch(r'(DEPOSIT|WITHDRAW) A\\d{4} [1-9]\\d*|TRANSFER A\\d{4} A\\d{4} [1-9]\\d*', line)` (adapt the grammar to the spec); no match means MALFORMED, silently ignored — fullmatch on the un-stripped line is what catches a trailing space, leading space, tab, or double space. STEP 3 — a line that MATCHES but names an id missing from the reference data, overdraws a balance, or self-transfers is REJECTED and MUST be recorded in the rejected output in processing order — never dropped as malformed; keep membership tests OUT of the parse step. STEP 4 — after writing the script, run `grep -n strip your_script.py` in bash: any hit other than rstrip('\\n') means fix and re-run before finishing. Then re-check both output files against every rule (exact format, ordering, tie-breaks)."
+description: "MANDATORY whenever a task replays/validates log lines against exact formatting rules (MALFORMED silently ignored vs REJECTED recorded). The session has a HARD TIME LIMIT: your FIRST tool call must be ONE bash heredoc that writes the complete processing script AND runs it, so both output files exist on disk within minutes — files written early still count if time runs out; verify only AFTER they exist. NEVER cat/print the data logs into the conversation (they are thousands of lines; the script reads them, you don't). The two fatal bugs, both observed: (1) NEVER call .strip() on a data line — validate the RAW line with one anchored re.fullmatch after removing only the trailing newline via rstrip('\\n'); (2) a positive-integer AMOUNT with no leading zeros is EXACTLY the regex [1-9]\\d* — writing 0*[1-9]\\d* silently accepts leading-zero amounts like 0500, which are MALFORMED, and corrupts one balance. Before writing code, COMMIT by writing this exact sentence in your reply: I will validate each raw line (rstrip newline only, never strip) with one re.fullmatch, and my amount pattern is [1-9]\\d* with no 0* prefix. Recipe: `line = raw.rstrip('\\n')` then `m = re.fullmatch(r'(DEPOSIT|WITHDRAW) A\\d{4} [1-9]\\d*|TRANSFER A\\d{4} A\\d{4} [1-9]\\d*', line)` (adapt grammar to the spec); no match = MALFORMED, silently ignored. A line that MATCHES but names an unknown id, overdraws (equal to balance is allowed), or self-transfers is REJECTED and MUST be recorded in processing order — keep membership tests OUT of the parse step. After the files exist, audit fast: `grep -nE \"strip|0\\*\" script.py` — any strip other than rstrip('\\n') or any 0* in a pattern means fix and re-run ONCE. Then stop; do not re-read the logs."
 ---
 
-# Malformed vs rejected: one regex, two phases, two audits
+# Malformed vs rejected: script first, one fullmatch, fast audit
 
-Specs that replay logs define two distinct kinds of bad input: lines that are
-*syntactically* invalid (ignore silently) and lines that are syntactically
-fine but *semantically* disallowed (record as rejected). Two classic bugs:
+## Rule 0 — beat the clock
 
-1. Calling `strip()` before validating — this "repairs" lines whose only
-   defect is a leading/trailing space, so a malformed line gets APPLIED and
-   one balance ends up silently wrong.
-2. Testing `id in accounts` inside the parse step — this makes
-   unknown-account lines vanish as malformed instead of being RECORDED as
-   rejected.
+These sessions are killed at a hard wall-clock limit. Output files already
+written to disk still count after the kill; analysis in your head does not.
+Therefore:
 
-## Phase 1 — syntax via one anchored fullmatch on the raw line
+- Your FIRST tool call writes the complete script (one bash heredoc) and runs
+  it, producing both output files immediately.
+- NEVER cat, head -100, or otherwise print the transaction logs into the
+  conversation. They are thousands of lines; ingesting them burns the whole
+  time budget. `head -3 txns/*.log` at most, only if genuinely unsure of the
+  format — the prompt already tells you the grammar.
+- Verify AFTER the files exist, briefly. Never before.
 
-Copy this shape (adapt the grammar to the spec):
+## Rule 1 — syntax via one anchored fullmatch on the raw line
 
 ```python
 for lineno, raw in enumerate(f, 1):
@@ -30,26 +31,34 @@ for lineno, raw in enumerate(f, 1):
         continue                     # MALFORMED: silently ignored
 ```
 
-`re.fullmatch` on the un-stripped line automatically fails trailing spaces,
-leading spaces, tabs, double spaces, lowercase ops, wrong field counts,
-leading-zero or signed or decimal amounts, and bad id shapes — with zero
-per-case code. Do not write `line.strip()` anywhere; it is the bug.
+Two fatal bugs this exact recipe prevents — both have actually happened:
 
-## Phase 2 — semantics, only for matched lines, always recorded
+1. `line.strip()` before validating "repairs" a line whose only defect is a
+   leading/trailing space, so a malformed line gets APPLIED. Only
+   `rstrip('\n')`, ever.
+2. Writing the amount as `0*[1-9]\d*` accepts leading-zero amounts like
+   `0500`, which the spec calls MALFORMED. The amount pattern is EXACTLY
+   `[1-9]\d*` — no `0*` prefix, no sign, no decimal.
 
-Unknown id in the reference data (on ANY operand), insufficient balance,
+`re.fullmatch` on the un-stripped line then fails trailing/leading spaces,
+tabs, double spaces, lowercase ops, wrong field counts, and bad id shapes
+with zero per-case code.
+
+## Rule 2 — semantics, only for matched lines, always recorded
+
+Unknown id in the reference data (on ANY operand), insufficient balance
+(spending the exact balance is ALLOWED — reject only when amount > balance),
 self-transfer: these are REJECTIONS. Append `(filename, lineno, op)` to the
 rejected list — never `continue` past them silently. Existence in the
 accounts file is NOT part of well-formedness.
 
-## Two audits before you finish (real bash calls)
+## Rule 3 — one fast audit, then stop
 
-1. `grep -n strip your_script.py` — every hit must be `rstrip('\n')`.
-2. `grep -nP '\t|  |^ | $' txns/*.log` — these are the planted whitespace
-   traps; verify each listed line was ignored: not applied to any balance
-   and absent from the rejected output.
+After both output files exist:
 
-Then re-run the pipeline end to end and re-check both output files against
-every rule in the prompt: per-category counts, exact line format, ordering,
-tie-breaks, and the final formatting (e.g. cents → dollars with two
-decimals).
+1. `grep -nE "strip|0\*" script.py` — every strip hit must be
+   `rstrip('\n')`; any `0*` inside a regex is the leading-zero bug. Fix and
+   re-run once if either appears.
+2. Re-check the two output files against the prompt's format rules from the
+   script's own output (ordering, tie-breaks, `$%.2f` from integer cents,
+   no trailing spaces) — do NOT re-read the logs to double-check totals.
