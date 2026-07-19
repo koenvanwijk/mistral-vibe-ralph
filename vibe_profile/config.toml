@@ -14,6 +14,13 @@ active_model = "mistral-local"
 # write_file gone, file creation goes through ONE bash call (mkdir -p +
 # quoted heredocs), the recipe the tool-call-protocol skill teaches.
 disabled_tools = ["write_file"]
+# Raise the HTTP read timeout above the 15-min trial wall clock. The default
+# 720s aborts a slow long generation (the ~2 tok/s local model writing a big
+# script heredoc) and blindly RE-GENERATES it from scratch: 18_txn_wal trial2
+# stalled at exactly start+720s (ReadTimeout in vibe.log at 05:40:25 =
+# 05:28:25 + 720.0s), lost the nearly-finished script, and the retry kept the
+# GPU busy into the next trial's slot. Inert for any turn under 12 min.
+api_timeout = 3600.0
 
 [[providers]]
 name = "spark-mistral"
