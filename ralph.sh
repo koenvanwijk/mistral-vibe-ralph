@@ -18,6 +18,23 @@ export TRIALS="${TRIALS:-3}"
 PROP_PY="${PROP_PY:-$HOME/.openclaw/workspace/agents-a1-repro/.venv/bin/python}"
 log(){ echo "[$(date -Is)] $*" | tee -a "$REPO/ralph.log"; }
 
+# Model-server health gate: the tuning signal is meaningless when the llama.cpp
+# backend is unreachable (every trial fails 0/N). Rather than burn iterations on
+# a dead server, block at the top of each round until it answers again.
+MODEL_URL="$(sed -n 's/[[:space:]]*api_base[[:space:]]*=[[:space:]]*"\(.*\)".*/\1/p' vibe_profile/config.toml | head -1)"
+HEALTH_INTERVAL="${HEALTH_INTERVAL:-60}"
+model_up(){ [ -n "$MODEL_URL" ] && curl -sf -m 10 "${MODEL_URL%/}/models" >/dev/null 2>&1; }
+wait_for_model(){  # block until the model server answers; never consumes an iteration
+  model_up && return 0
+  log "model server ${MODEL_URL:-<unset>} unreachable — pausing round (retry every ${HEALTH_INTERVAL}s)"
+  local waited=0
+  until model_up; do
+    sleep "$HEALTH_INTERVAL"; waited=$((waited+HEALTH_INTERVAL))
+    [ $((waited % 600)) -eq 0 ] && log "still waiting for model server (${waited}s elapsed)"
+  done
+  log "model server recovered after ${waited}s — resuming"
+}
+
 claude_up(){ timeout 90 claude -p "reply with exactly OK" --dangerously-skip-permissions 2>/dev/null | grep -q OK; }
 
 propose_claude(){  # $1=iter ; returns 0 ok, 1 quota/failure
@@ -36,6 +53,7 @@ propose_local(){  # $1=iter ; uses Agents-A1
 commit(){ git add -A && git commit -q -m "$1" && git push -q 2>/dev/null || true; }
 
 log "=== ralph start: up to $N iterations, TRIALS=$TRIALS ==="
+wait_for_model
 bash scripts/apply_profile.sh
 bash scripts/run_all.sh | tee -a "$REPO/ralph.log"
 bash scripts/score.sh
@@ -46,6 +64,10 @@ commit "baseline score=$best"
 
 mode=claude
 for i in $(seq 1 "$N"); do
+  # gate the whole round on backend health so no iteration (nor proposer call)
+  # is spent while the model server is down
+  wait_for_model
+
   # try to recover Claude when running local
   if [ "$mode" = local ] && claude_up; then mode=claude; log "Claude quota recovered -> back to Claude"; fi
 
@@ -84,6 +106,7 @@ for i in $(seq 1 "$N"); do
     log "saturated ($new/$ntasks) x$sat — escalating with a harder task"
     if bash scripts/gen_task.sh; then
       sat=0
+      wait_for_model
       bash scripts/apply_profile.sh
       bash scripts/run_all.sh | tee -a "$REPO/ralph.log"
       bash scripts/score.sh
